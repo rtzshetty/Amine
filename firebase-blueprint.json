@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Series": {
+      "title": "Series",
+      "description": "Anime or Movie series",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "poster_url": { "type": "string" },
+        "created_by": { "type": "string" },
+        "publish_status": { "type": "string", "enum": ["draft", "published"] },
+        "created_at": { "type": "number" }
+      },
+      "required": ["title", "description", "poster_url", "publish_status", "created_at"]
+    },
+    "Episode": {
+      "title": "Episode",
+      "description": "An episode of a series",
+      "type": "object",
+      "properties": {
+        "series_id": { "type": "string" },
+        "episode_number": { "type": "number" },
+        "episode_title": { "type": "string" },
+        "video_url": { "type": "string" },
+        "duration": { "type": "number" },
+        "created_at": { "type": "number" }
+      },
+      "required": ["series_id", "episode_number", "episode_title", "video_url", "created_at"]
+    },
+    "WatchHistory": {
+      "title": "Watch History",
+      "description": "User's watch history",
+      "type": "object",
+      "properties": {
+        "user_id": { "type": "string" },
+        "series_id": { "type": "string" },
+        "episode_id": { "type": "string" },
+        "last_watched_time": { "type": "number" },
+        "updated_at": { "type": "number" }
+      },
+      "required": ["user_id", "series_id", "episode_id", "last_watched_time", "updated_at"]
+    }
+  },
+  "firestore": {
+    "series/{seriesId}": {
+      "schema": { "$ref": "#/entities/Series" },
+      "description": "Collection of series"
+    },
+    "episodes/{episodeId}": {
+      "schema": { "$ref": "#/entities/Episode" },
+      "description": "Collection of episodes"
+    },
+    "watchHistory/{historyId}": {
+      "schema": { "$ref": "#/entities/WatchHistory" },
+      "description": "Collection of watch histories"
+    }
+  }
+}

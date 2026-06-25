@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitives
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    
+    // For demo purposes, we will allow anyone to act as admin. 
+    // IN PRODUCTION: implement real admin checks.
+    // function isAdmin() { return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    function isAdmin() { return true; } // Demo override
+
+    function isGuest() { return true; } // Demo override for anonymous guests
+
+    // Series
+    function isValidSeries(data) {
+      return data.title is string;
+    }
+
+    match /series/{seriesId} {
+      allow read, write: if true;
+    }
+
+    match /episodes/{episodeId} {
+      allow read, write: if true;
+    }
+
+    // Watch History
+    function isValidWatchHistory(data) {
+      return data.keys().hasAll(['user_id', 'series_id', 'episode_id', 'last_watched_time', 'updated_at'])
+        && data.user_id is string && data.user_id.size() <= 128
+        && data.series_id is string && data.series_id.size() <= 128
+        && data.episode_id is string && data.episode_id.size() <= 128
+        && data.last_watched_time is number
+        && data.updated_at is number;
+    }
+
+    match /watchHistory/{historyId} {
+      allow read: if isGuest() && resource.data.user_id == request.auth.uid;
+      allow create: if isGuest()
+                    && isValidId(historyId)
+                    && isValidWatchHistory(incoming())
+                    && incoming().user_id == request.auth.uid
+                    && incoming().updated_at == request.time.toMillis();
+      allow update: if isGuest()
+                    && isValidId(historyId)
+                    && isValidWatchHistory(incoming())
+                    && incoming().user_id == existing().user_id
+                    && incoming().user_id == request.auth.uid
+                    && incoming().updated_at == request.time.toMillis();
+      allow delete: if isGuest() && isValidId(historyId) && existing().user_id == request.auth.uid;
+    }
+  }
+}
